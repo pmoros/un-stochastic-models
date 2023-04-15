@@ -10,4 +10,4 @@ In order to run a simulation you gotta put your `*.cc` file with the simulation 
 
 ## Extra
 
-You can modify the Dockerfile to make this easy to follow
+You can modify the Dockerfile to make this easy to follow. The example code comes from https://www.youtube.com/watch?v=WaMK5Af_qh0
