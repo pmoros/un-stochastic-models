@@ -225,14 +225,14 @@ void RoutingExperiment::Run(int nSinks, double txp, std::string CSVfileName)
   m_txp = txp;
   m_CSVfileName = CSVfileName;
 
-  int nWifis = 50;
+  int nWifis = 36;
 
   double TotalTime = 120.0;
   std::string rate("2048bps");
   std::string phyMode("DsssRate11Mbps");
   std::string tr_name("OLSR");
-  int nodeSpeed = 20; // in m/s
-  int nodePause = 0;  // in s
+  int nodeSpeed = 1; // in m/s
+  int nodePause = 0; // in s
   m_protocolName = "protocol";
 
   Config::SetDefault("ns3::OnOffApplication::PacketSize", StringValue("64"));
@@ -273,7 +273,7 @@ void RoutingExperiment::Run(int nSinks, double txp, std::string CSVfileName)
   pos.SetTypeId("ns3::RandomRectanglePositionAllocator");
   pos.Set("X", StringValue("ns3::UniformRandomVariable[Min=0.0|Max=500.0]"));
   pos.Set("Y", StringValue("ns3::UniformRandomVariable[Min=0.0|Max=500.0]"));
-  // 300x1500metres
+  // 500x500metres
 
   Ptr<PositionAllocator> taPositionAlloc = pos.Create()->GetObject<PositionAllocator>();
   streamIndex += taPositionAlloc->AssignStreams(streamIndex);
