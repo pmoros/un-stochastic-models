@@ -1,5 +1,13 @@
-FROM ryankurte/docker-ns3
+FROM pmoros/ns3:latest
 
 WORKDIR /usr/ns3/ns-3.26
 
-COPY . .
+# Copy the simulation code to the container
+COPY ./simulation.cc ./scratch/my-simulation.cc
+
+# Build the simulation
+RUN ./waf --run scratch-simulator
+
+# Run the simulation as entrypoint
+ENTRYPOINT ["./waf", "--run", "my-simulation"]
+
