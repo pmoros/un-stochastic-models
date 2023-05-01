@@ -19,7 +19,7 @@ using namespace dsr;
 
 int main(int argc, char *argv[])
 {
-  int nWifis = 2;
+  int nWifis = 5;
   double simulationTime = 10; // seconds
   // Enable logging
   LogComponentEnable("OnOffApplication", LOG_LEVEL_INFO);
@@ -32,7 +32,6 @@ int main(int argc, char *argv[])
   int nodeSpeed = 1; // in m/s
   int nodePause = 0; // in s
   m_protocolName = "protocol";
-  uint32_t m_protocol;
 
   Config::SetDefault("ns3::OnOffApplication::PacketSize", StringValue("64"));
   Config::SetDefault("ns3::OnOffApplication::DataRate", StringValue(rate));
@@ -99,83 +98,61 @@ int main(int argc, char *argv[])
   Ipv4ListRoutingHelper list;
   InternetStackHelper internet;
 
-  m_protocol = 1;
+  list.Add(olsr, 100);
+  m_protocolName = "OLSR";
 
-  switch (m_protocol)
-  {
-  case 1:
-    list.Add(olsr, 100);
-    m_protocolName = "OLSR";
-    break;
-  case 2:
-    list.Add(aodv, 100);
-    m_protocolName = "AODV";
-    break;
-  case 3:
-    list.Add(dsdv, 100);
-    m_protocolName = "DSDV";
-    break;
-  case 4:
-    m_protocolName = "DSR";
-    break;
-  default:
-    NS_FATAL_ERROR("No such protocol:" << m_protocol);
-  }
-
-  if (m_protocol < 4)
-  {
-    internet.SetRoutingHelper(list);
-    internet.Install(adhocNodes);
-  }
-  else if (m_protocol == 4)
-  {
-    internet.Install(adhocNodes);
-    dsrMain.Install(dsr, adhocNodes);
-  }
+  internet.SetRoutingHelper(list);
+  internet.Install(adhocNodes);
 
   Ipv4AddressHelper addressAdhoc;
   addressAdhoc.SetBase("10.1.1.0", "255.255.255.0");
   Ipv4InterfaceContainer adhocInterfaces;
   adhocInterfaces = addressAdhoc.Assign(adhocDevices);
 
+  double sendDurations[] = {0.75, 0.5, 0.5, 0.75, 0.5};
   // Create applications
+  ApplicationContainer apps;
   uint16_t port = 9; // Discard port (RFC 863)
-  OnOffHelper onOff1("ns3::UdpSocketFactory", Address(InetSocketAddress(adhocInterfaces.GetAddress(1), port)));
-  onOff1.SetAttribute("DataRate", StringValue("512000bps"));
-  onOff1.SetAttribute("PacketSize", UintegerValue(1024));
+  // Install applications
+  for (int i = 0; i < nWifis; i++)
+  {
+    double sendDuration = sendDurations[i]; // send data 50% of the time
+    OnOffHelper onOff1("ns3::UdpSocketFactory", Address(InetSocketAddress(adhocInterfaces.GetAddress(1), port)));
+    onOff1.SetAttribute("DataRate", StringValue("512000bps"));
+    onOff1.SetAttribute("PacketSize", UintegerValue(1024));
 
-  double sendDuration = 0.5; // send data 50% of the time
-  Ptr<UniformRandomVariable> onTime = CreateObject<UniformRandomVariable>();
-  onTime->SetAttribute("Min", DoubleValue(0.0));
-  onTime->SetAttribute("Max", DoubleValue(simulationTime * sendDuration));
-  onOff1.SetAttribute("OnTime", PointerValue(onTime));
+    Ptr<UniformRandomVariable> onTime = CreateObject<UniformRandomVariable>();
+    onTime->SetAttribute("Min", DoubleValue(0.0));
+    onTime->SetAttribute("Max", DoubleValue(simulationTime * sendDuration));
+    onOff1.SetAttribute("OnTime", PointerValue(onTime));
 
-  Ptr<UniformRandomVariable> offTime = CreateObject<UniformRandomVariable>();
-  offTime->SetAttribute("Min", DoubleValue(0.0));
-  offTime->SetAttribute("Max", DoubleValue(simulationTime * (1.0 - sendDuration)));
-  onOff1.SetAttribute("OffTime", PointerValue(offTime));
+    Ptr<UniformRandomVariable> offTime = CreateObject<UniformRandomVariable>();
+    offTime->SetAttribute("Min", DoubleValue(0.0));
+    offTime->SetAttribute("Max", DoubleValue(simulationTime * (1.0 - sendDuration)));
+    onOff1.SetAttribute("OffTime", PointerValue(offTime));
 
-  ApplicationContainer apps = onOff1.Install(adhocNodes.Get(0));
-  apps.Start(Seconds(1.0));
-  // apps.Stop(Seconds(simulationTime));
+    apps = onOff1.Install(adhocNodes.Get(i));
+    apps.Start(Seconds(1.0));
+  }
 
   // Create a sink application to receive the data
-  PacketSinkHelper sink("ns3::UdpSocketFactory", Address(InetSocketAddress(adhocInterfaces.GetAddress(1), port)));
-  apps = sink.Install(adhocNodes.Get(1));
+  PacketSinkHelper sink("ns3::UdpSocketFactory", Address(InetSocketAddress(adhocInterfaces.GetAddress(nWifis - 1), port)));
+  apps = sink.Install(adhocNodes.Get(nWifis - 1));
   apps.Start(Seconds(0.0));
-  // apps.Stop(Seconds(simulationTime));
+
+  // Initialize FlowMonitor
+  FlowMonitorHelper flowHelper;
+  Ptr<FlowMonitor> flowMonitor = flowHelper.InstallAll();
 
   // Run the simulation
   Simulator::Stop(Seconds(simulationTime));
   Simulator::Run();
 
-  // Calculate and print the average amount of data sent
-  uint64_t totalBytes = DynamicCast<PacketSink>(apps.Get(0))->GetTotalRx();
-  double avgBytesPerSec = totalBytes / (simulationTime - 1.0);
-  std::cout << "Average amount of data sent: " << avgBytesPerSec << " bytes/sec" << std::endl;
-
   // Cleanup
   Simulator::Destroy();
+
+  // Print per flow statistics
+  flowMonitor->SerializeToXmlFile("/workspaces/un-stochastic-models/workshop-01/flowmonitor.xml", false, true);
 
   return 0;
 }
