@@ -19,8 +19,8 @@ using namespace dsr;
 
 int main(int argc, char *argv[])
 {
-  int nWifis = 2;
-  double simulationTime = 10; // seconds
+  int nWifis = 5;
+  double simulationTime = 30; // seconds
   // Enable logging
   LogComponentEnable("OnOffApplication", LOG_LEVEL_INFO);
 
@@ -126,25 +126,32 @@ int main(int argc, char *argv[])
   offTime->SetAttribute("Max", DoubleValue(simulationTime * (1.0 - sendDuration)));
   onOff1.SetAttribute("OffTime", PointerValue(offTime));
 
-  ApplicationContainer apps = onOff1.Install(adhocNodes.Get(0));
-  apps.Start(Seconds(1.0));
+  ApplicationContainer apps;
+  // Install applications
+  for (int i = 0; i < nWifis - 1; i++)
+  {
+    apps = onOff1.Install(adhocNodes.Get(i));
+    apps.Start(Seconds(1.0));
+  }
 
   // Create a sink application to receive the data
-  PacketSinkHelper sink("ns3::UdpSocketFactory", Address(InetSocketAddress(adhocInterfaces.GetAddress(1), port)));
-  apps = sink.Install(adhocNodes.Get(1));
+  PacketSinkHelper sink("ns3::UdpSocketFactory", Address(InetSocketAddress(adhocInterfaces.GetAddress(nWifis - 1), port)));
+  apps = sink.Install(adhocNodes.Get(nWifis - 1));
   apps.Start(Seconds(0.0));
+
+  // Initialize FlowMonitor
+  FlowMonitorHelper flowHelper;
+  Ptr<FlowMonitor> flowMonitor = flowHelper.InstallAll();
 
   // Run the simulation
   Simulator::Stop(Seconds(simulationTime));
   Simulator::Run();
 
-  // Calculate and print the average amount of data sent
-  uint64_t totalBytes = DynamicCast<PacketSink>(apps.Get(0))->GetTotalRx();
-  double avgBytesPerSec = totalBytes / (simulationTime - 1.0);
-  std::cout << "Average amount of data sent: " << avgBytesPerSec << " bytes/sec" << std::endl;
-
   // Cleanup
   Simulator::Destroy();
+
+  // Print per flow statistics
+  flowMonitor->SerializeToXmlFile("/workspaces/un-stochastic-models/workshop-01/flowmonitor.xml", false, true);
 
   return 0;
 }
