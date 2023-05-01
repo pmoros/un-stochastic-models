@@ -17,8 +17,17 @@
 using namespace ns3;
 using namespace dsr;
 
+int createCluster(int nWifi, double simulationT, double durations[]);
+
 int main(int argc, char *argv[])
 {
+  double sampleArray[5] = {0.75, 0.5, 0.5, 0.75, 0.5};
+  createCluster(1, 1.0, sampleArray);
+}
+
+int createCluster(int nWifi, double simulationT, double durations[])
+{
+
   int nWifis = 5;
   double simulationTime = 10; // seconds
   // Enable logging
