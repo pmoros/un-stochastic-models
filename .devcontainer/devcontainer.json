@@ -1,0 +1,14 @@
+{
+  "name": "My Dev Container",
+  "dockerFile": "../workshop-01/Dockerfile",
+  "settings": {
+    "terminal.integrated.shell.linux": "/bin/bash"
+  },
+  "extensions": [
+    "ms-vscode.cpptools",
+    "twxs.cmake",
+    "github.copilot",
+    "eamodio.gitlens"
+  ],
+  "remoteUser": "root"
+}

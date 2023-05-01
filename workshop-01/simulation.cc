@@ -50,12 +50,18 @@ int main(int argc, char *argv[])
   PacketSinkHelper sinkHelper("ns3::UdpSocketFactory", InetSocketAddress(Ipv4Address::GetAny(), 9));
   ApplicationContainer sinkApps = sinkHelper.Install(nodes);
 
+  // Send a UDP packet from node zero to node one
+  Ptr<Socket> ns3UdpSocket = Socket::CreateSocket(nodes.Get(0), UdpSocketFactory::GetTypeId());
+  InetSocketAddress remote = InetSocketAddress(interfaces.GetAddress(1), 9);
+  ns3UdpSocket->Connect(remote);
+  // ns3UdpSocket->Send(Create<Packet>(1024));
+
   // Calculate and output the average traffic received by each node
   for (uint32_t i = 0; i < nodes.GetN(); ++i)
   {
     Ptr<PacketSink> sink = DynamicCast<PacketSink>(sinkApps.Get(i));
     uint64_t totalBytes = sink->GetTotalRx();
-    double avgBytes = totalBytes / (11);
+    double avgBytes = totalBytes;
     std::cout << "Node " << i << " received an average of " << avgBytes << " bytes of traffic." << std::endl;
   }
 

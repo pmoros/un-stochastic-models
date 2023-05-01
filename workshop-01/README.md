@@ -1,5 +1,11 @@
 # NS3 simulation for ad-hoc networks
 
+# Use the dev container
+
+Oneliner to run the project.
+
+`export LAST_DIR=$(pwd) && cp simulation.cc /usr/ns3/ns-3.26/scratch/my-simulation.cc && cd /usr/ns3/ns-3.26/ && ./waf --run scratch-simulator && ./waf --run my-simulation && cd ${LAST_DIR}`
+
 ## Configure the project
 
 ### Using commands
