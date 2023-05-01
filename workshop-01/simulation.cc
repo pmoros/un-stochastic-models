@@ -32,7 +32,6 @@ int main(int argc, char *argv[])
   int nodeSpeed = 1; // in m/s
   int nodePause = 0; // in s
   m_protocolName = "protocol";
-  uint32_t m_protocol;
 
   Config::SetDefault("ns3::OnOffApplication::PacketSize", StringValue("64"));
   Config::SetDefault("ns3::OnOffApplication::DataRate", StringValue(rate));
@@ -99,39 +98,11 @@ int main(int argc, char *argv[])
   Ipv4ListRoutingHelper list;
   InternetStackHelper internet;
 
-  m_protocol = 1;
+  list.Add(olsr, 100);
+  m_protocolName = "OLSR";
 
-  switch (m_protocol)
-  {
-  case 1:
-    list.Add(olsr, 100);
-    m_protocolName = "OLSR";
-    break;
-  case 2:
-    list.Add(aodv, 100);
-    m_protocolName = "AODV";
-    break;
-  case 3:
-    list.Add(dsdv, 100);
-    m_protocolName = "DSDV";
-    break;
-  case 4:
-    m_protocolName = "DSR";
-    break;
-  default:
-    NS_FATAL_ERROR("No such protocol:" << m_protocol);
-  }
-
-  if (m_protocol < 4)
-  {
-    internet.SetRoutingHelper(list);
-    internet.Install(adhocNodes);
-  }
-  else if (m_protocol == 4)
-  {
-    internet.Install(adhocNodes);
-    dsrMain.Install(dsr, adhocNodes);
-  }
+  internet.SetRoutingHelper(list);
+  internet.Install(adhocNodes);
 
   Ipv4AddressHelper addressAdhoc;
   addressAdhoc.SetBase("10.1.1.0", "255.255.255.0");
