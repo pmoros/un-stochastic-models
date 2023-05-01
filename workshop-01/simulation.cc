@@ -17,19 +17,40 @@
 using namespace ns3;
 using namespace dsr;
 
-int createCluster(int nWifi, double simulationT, double durations[]);
+int createCluster(int nWifi, double simulationT, ns3::Ipv4Address networkIpAddress, double durations[]);
 
 int main(int argc, char *argv[])
 {
-  double sampleArray[5] = {0.75, 0.5, 0.5, 0.75, 0.5};
-  createCluster(1, 1.0, sampleArray);
+  double simulationTime = 10; // seconds
+
+  const int SAMPLE_SIZE_01 = 6;
+  double sampleArray01[SAMPLE_SIZE_01] = {0.75, 0.5, 0.5, 0.75, 0.5, 0.75};
+  createCluster(SAMPLE_SIZE_01, simulationTime, "192.168.1.0", sampleArray01);
+
+  const int SAMPLE_SIZE_02 = 6;
+  double sampleArray02[SAMPLE_SIZE_02] = {0.75, 0.5, 0.5, 0.75, 0.5, 0.75};
+  createCluster(SAMPLE_SIZE_02, simulationTime, "192.168.2.0", sampleArray02);
+
+  // Initialize FlowMonitor
+  FlowMonitorHelper flowHelper;
+  Ptr<FlowMonitor> flowMonitor = flowHelper.InstallAll();
+
+  // Run the simulation
+  Simulator::Stop(Seconds(simulationTime));
+  Simulator::Run();
+
+  // Cleanup
+  Simulator::Destroy();
+
+  // Print per flow statistics
+  flowMonitor->SerializeToXmlFile("/workspaces/un-stochastic-models/workshop-01/flowmonitor.xml", false, true);
 }
 
-int createCluster(int nWifi, double simulationT, double durations[])
+int createCluster(int nWifi, double simulationT, ns3::Ipv4Address networkIpAddress, double sendDurations[])
 {
-
-  int nWifis = 5;
-  double simulationTime = 10; // seconds
+  double simulationTime = simulationT; // seconds
+  int nWifis = nWifi;
+  // double sendDurations[] = durations;
   // Enable logging
   LogComponentEnable("OnOffApplication", LOG_LEVEL_INFO);
 
@@ -114,11 +135,10 @@ int createCluster(int nWifi, double simulationT, double durations[])
   internet.Install(adhocNodes);
 
   Ipv4AddressHelper addressAdhoc;
-  addressAdhoc.SetBase("10.1.1.0", "255.255.255.0");
+  addressAdhoc.SetBase(networkIpAddress, "255.255.255.0");
   Ipv4InterfaceContainer adhocInterfaces;
   adhocInterfaces = addressAdhoc.Assign(adhocDevices);
 
-  double sendDurations[] = {0.75, 0.5, 0.5, 0.75, 0.5};
   // Create applications
   ApplicationContainer apps;
   uint16_t port = 9; // Discard port (RFC 863)
@@ -148,20 +168,6 @@ int createCluster(int nWifi, double simulationT, double durations[])
   PacketSinkHelper sink("ns3::UdpSocketFactory", Address(InetSocketAddress(adhocInterfaces.GetAddress(nWifis - 1), port)));
   apps = sink.Install(adhocNodes.Get(nWifis - 1));
   apps.Start(Seconds(0.0));
-
-  // Initialize FlowMonitor
-  FlowMonitorHelper flowHelper;
-  Ptr<FlowMonitor> flowMonitor = flowHelper.InstallAll();
-
-  // Run the simulation
-  Simulator::Stop(Seconds(simulationTime));
-  Simulator::Run();
-
-  // Cleanup
-  Simulator::Destroy();
-
-  // Print per flow statistics
-  flowMonitor->SerializeToXmlFile("/workspaces/un-stochastic-models/workshop-01/flowmonitor.xml", false, true);
 
   return 0;
 }
