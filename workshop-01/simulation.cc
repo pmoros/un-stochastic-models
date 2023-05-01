@@ -8,6 +8,8 @@ using namespace ns3;
 
 int main(int argc, char *argv[])
 {
+
+  double simulationTime = 30; // seconds
   // Enable logging
   LogComponentEnable("OnOffApplication", LOG_LEVEL_INFO);
 
@@ -37,20 +39,20 @@ int main(int argc, char *argv[])
   onOff.SetAttribute("OffTime", StringValue("ns3::ConstantRandomVariable[Constant=0]"));
   ApplicationContainer apps = onOff.Install(nodes.Get(0));
   apps.Start(Seconds(1.0));
-  apps.Stop(Seconds(10.0));
+  apps.Stop(Seconds(simulationTime));
 
   // Create a sink application to receive the data
   PacketSinkHelper sink("ns3::UdpSocketFactory", Address(InetSocketAddress(Ipv4Address::GetAny(), port)));
   apps = sink.Install(nodes.Get(1));
   apps.Start(Seconds(0.0));
-  apps.Stop(Seconds(10.0));
+  apps.Stop(Seconds(simulationTime));
 
   // Run the simulation
   Simulator::Run();
 
   // Calculate and print the average amount of data sent
   uint64_t totalBytes = DynamicCast<PacketSink>(apps.Get(0))->GetTotalRx();
-  double avgBytesPerSec = totalBytes / (10.0 - 1.0);
+  double avgBytesPerSec = totalBytes / (simulationTime - 1.0);
   std::cout << "Average amount of data sent: " << avgBytesPerSec << " bytes/sec" << std::endl;
 
   // Cleanup
