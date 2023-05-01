@@ -17,19 +17,27 @@
 using namespace ns3;
 using namespace dsr;
 
-int createCluster(int nWifi, double simulationT, ns3::Ipv4Address networkIpAddress, double durations[]);
+ns3::Ptr<ns3::Node> createCluster(int nWifi, double simulationT, ns3::Ipv4Address networkIpAddress, double durations[]);
 
 int main(int argc, char *argv[])
 {
   double simulationTime = 10; // seconds
 
+  // Layer 01
+
   const int SAMPLE_SIZE_01 = 6;
   double sampleArray01[SAMPLE_SIZE_01] = {0.75, 0.5, 0.5, 0.75, 0.5, 0.75};
-  createCluster(SAMPLE_SIZE_01, simulationTime, "192.168.1.0", sampleArray01);
+  ns3::Ptr<ns3::Node> headNode01 = createCluster(SAMPLE_SIZE_01, simulationTime, "192.168.1.0", sampleArray01);
 
   const int SAMPLE_SIZE_02 = 6;
   double sampleArray02[SAMPLE_SIZE_02] = {0.75, 0.5, 0.5, 0.75, 0.5, 0.75};
-  createCluster(SAMPLE_SIZE_02, simulationTime, "192.168.2.0", sampleArray02);
+  ns3::Ptr<ns3::Node> headNode02 = createCluster(SAMPLE_SIZE_02, simulationTime, "192.168.2.0", sampleArray02);
+
+  // Layer 02
+  NodeContainer layer02Cluster01_01 = NodeContainer(headNode01);
+  NodeContainer layer02Cluster01_02 = NodeContainer(headNode02);
+
+  layer02Cluster01_01.Add(layer02Cluster01_02);
 
   // Initialize FlowMonitor
   FlowMonitorHelper flowHelper;
@@ -46,7 +54,7 @@ int main(int argc, char *argv[])
   flowMonitor->SerializeToXmlFile("/workspaces/un-stochastic-models/workshop-01/flowmonitor.xml", false, true);
 }
 
-int createCluster(int nWifi, double simulationT, ns3::Ipv4Address networkIpAddress, double sendDurations[])
+ns3::Ptr<ns3::Node> createCluster(int nWifi, double simulationT, ns3::Ipv4Address networkIpAddress, double sendDurations[])
 {
   double simulationTime = simulationT; // seconds
   int nWifis = nWifi;
@@ -169,5 +177,5 @@ int createCluster(int nWifi, double simulationT, ns3::Ipv4Address networkIpAddre
   apps = sink.Install(adhocNodes.Get(nWifis - 1));
   apps.Start(Seconds(0.0));
 
-  return 0;
+  return adhocNodes.Get(nWifis - 1);
 }
