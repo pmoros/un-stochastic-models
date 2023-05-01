@@ -128,13 +128,11 @@ int main(int argc, char *argv[])
 
   ApplicationContainer apps = onOff1.Install(adhocNodes.Get(0));
   apps.Start(Seconds(1.0));
-  // apps.Stop(Seconds(simulationTime));
 
   // Create a sink application to receive the data
   PacketSinkHelper sink("ns3::UdpSocketFactory", Address(InetSocketAddress(adhocInterfaces.GetAddress(1), port)));
   apps = sink.Install(adhocNodes.Get(1));
   apps.Start(Seconds(0.0));
-  // apps.Stop(Seconds(simulationTime));
 
   // Run the simulation
   Simulator::Stop(Seconds(simulationTime));
