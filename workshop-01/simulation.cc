@@ -35,8 +35,18 @@ int main(int argc, char *argv[])
   OnOffHelper onOff("ns3::UdpSocketFactory", Address(InetSocketAddress(interfaces.GetAddress(1), port)));
   onOff.SetAttribute("DataRate", StringValue("1Mbps"));
   onOff.SetAttribute("PacketSize", UintegerValue(1024));
-  onOff.SetAttribute("OnTime", StringValue("ns3::ConstantRandomVariable[Constant=1]"));
-  onOff.SetAttribute("OffTime", StringValue("ns3::ConstantRandomVariable[Constant=0]"));
+
+  double sendDuration = 0.5; // send data 50% of the time
+  Ptr<UniformRandomVariable> onTime = CreateObject<UniformRandomVariable>();
+  onTime->SetAttribute("Min", DoubleValue(0.0));
+  onTime->SetAttribute("Max", DoubleValue(simulationTime * sendDuration));
+  onOff.SetAttribute("OnTime", PointerValue(onTime));
+
+  Ptr<UniformRandomVariable> offTime = CreateObject<UniformRandomVariable>();
+  offTime->SetAttribute("Min", DoubleValue(0.0));
+  offTime->SetAttribute("Max", DoubleValue(simulationTime * (1.0 - sendDuration)));
+  onOff.SetAttribute("OffTime", PointerValue(offTime));
+
   ApplicationContainer apps = onOff.Install(nodes.Get(0));
   apps.Start(Seconds(1.0));
   apps.Stop(Seconds(simulationTime));
