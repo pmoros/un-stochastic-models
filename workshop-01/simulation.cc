@@ -20,7 +20,7 @@ using namespace dsr;
 int main(int argc, char *argv[])
 {
   int nWifis = 5;
-  double simulationTime = 30; // seconds
+  double simulationTime = 10; // seconds
   // Enable logging
   LogComponentEnable("OnOffApplication", LOG_LEVEL_INFO);
 
@@ -109,27 +109,28 @@ int main(int argc, char *argv[])
   Ipv4InterfaceContainer adhocInterfaces;
   adhocInterfaces = addressAdhoc.Assign(adhocDevices);
 
+  double sendDurations[] = {0.75, 0.5, 0.5, 0.75, 0.5};
   // Create applications
-  uint16_t port = 9; // Discard port (RFC 863)
-  OnOffHelper onOff1("ns3::UdpSocketFactory", Address(InetSocketAddress(adhocInterfaces.GetAddress(1), port)));
-  onOff1.SetAttribute("DataRate", StringValue("512000bps"));
-  onOff1.SetAttribute("PacketSize", UintegerValue(1024));
-
-  double sendDuration = 0.5; // send data 50% of the time
-  Ptr<UniformRandomVariable> onTime = CreateObject<UniformRandomVariable>();
-  onTime->SetAttribute("Min", DoubleValue(0.0));
-  onTime->SetAttribute("Max", DoubleValue(simulationTime * sendDuration));
-  onOff1.SetAttribute("OnTime", PointerValue(onTime));
-
-  Ptr<UniformRandomVariable> offTime = CreateObject<UniformRandomVariable>();
-  offTime->SetAttribute("Min", DoubleValue(0.0));
-  offTime->SetAttribute("Max", DoubleValue(simulationTime * (1.0 - sendDuration)));
-  onOff1.SetAttribute("OffTime", PointerValue(offTime));
-
   ApplicationContainer apps;
+  uint16_t port = 9; // Discard port (RFC 863)
   // Install applications
-  for (int i = 0; i < nWifis - 1; i++)
+  for (int i = 0; i < nWifis; i++)
   {
+    double sendDuration = sendDurations[i]; // send data 50% of the time
+    OnOffHelper onOff1("ns3::UdpSocketFactory", Address(InetSocketAddress(adhocInterfaces.GetAddress(1), port)));
+    onOff1.SetAttribute("DataRate", StringValue("512000bps"));
+    onOff1.SetAttribute("PacketSize", UintegerValue(1024));
+
+    Ptr<UniformRandomVariable> onTime = CreateObject<UniformRandomVariable>();
+    onTime->SetAttribute("Min", DoubleValue(0.0));
+    onTime->SetAttribute("Max", DoubleValue(simulationTime * sendDuration));
+    onOff1.SetAttribute("OnTime", PointerValue(onTime));
+
+    Ptr<UniformRandomVariable> offTime = CreateObject<UniformRandomVariable>();
+    offTime->SetAttribute("Min", DoubleValue(0.0));
+    offTime->SetAttribute("Max", DoubleValue(simulationTime * (1.0 - sendDuration)));
+    onOff1.SetAttribute("OffTime", PointerValue(offTime));
+
     apps = onOff1.Install(adhocNodes.Get(i));
     apps.Start(Seconds(1.0));
   }
