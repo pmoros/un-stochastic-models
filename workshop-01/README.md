@@ -4,7 +4,7 @@
 
 Oneliner to run the project.
 
-`export LAST_DIR=$(pwd); cp simulation.cc /usr/ns3/ns-3.26/scratch/my-simulation.cc; cd /usr/ns3/ns-3.26/; (./waf --run scratch-simulator && ./waf --run my-simulation); cd ${LAST_DIR}`
+`cd /workspaces/un-stochastic-models/workshop-01/ && export LAST_DIR=$(pwd); cp simulation.cc /usr/ns3/ns-3.26/scratch/my-simulation.cc; cd /usr/ns3/ns-3.26/; (./waf --run scratch-simulator && ./waf --run my-simulation); cd ${LAST_DIR}`
 
 ## Configure the project
 
