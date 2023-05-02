@@ -11,3 +11,5 @@ RUN ./waf --run scratch-simulator
 # Run the simulation as entrypoint
 ENTRYPOINT ["./waf", "--run", "my-simulation"]
 
+# TODO fix
+
